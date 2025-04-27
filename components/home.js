@@ -1667,6 +1667,15 @@ setShowCountryButtons(false)
 
 
   function backBtnPressed(queueNextGame = false, nextGameType) {
+    const isInGame = screen === "singleplayer" || multiplayerState?.inGame;
+
+    if (isInGame) {
+      const confirmLeave = window.confirm(text("confirmLeaveGame"));
+      if (!confirmLeave) {
+        return; // User cancelled leaving
+      }
+    }
+
     setStreetViewShown(false)
     setOnboardingCompleted(true)
 
@@ -1745,6 +1754,7 @@ setShowCountryButtons(false)
       setScreen("home")
 
     } else {
+      // This handles leaving singleplayer or when not in a multiplayer game/queue
       setMultiplayerChatEnabled(false)
 
       setScreen("home");
