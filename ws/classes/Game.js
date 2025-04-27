@@ -14,7 +14,7 @@ import { fromLonLat } from "ol/proj.js";
 import { setElo } from "../../api/eloRank.js";
 
 export default class Game {
-  constructor(id, publicLobby, location="all", rounds=5, allLocations, isDuel=false) {
+  constructor(id, publicLobby, location="all", rounds=5, allLocations, isDuel=false, exhaustUniqueLocations = true) {
     this.id = id;
     this.code = publicLobby ? null : make6DigitCode();
     this.players = {};
@@ -40,6 +40,7 @@ export default class Game {
     this.extent = null;
     this.displayLocation = null;
     this.readyToEnd = false;
+    this.exhaustUniqueLocations = exhaustUniqueLocations;
 
     if(this.public) {
       this.showRoadName = false;
@@ -80,10 +81,11 @@ export default class Game {
       pIds: this.pIds,
       accountIds: this.accountIds,
       location: this.location,
+      exhaustUniqueLocations: this.exhaustUniqueLocations,
     }
   }
   static fromJSON(json) {
-    const gObj = new Game(json.id, json.public, json.location, json.rounds, null, json.duel);
+    const gObj = new Game(json.id, json.public, json.location, json.rounds, null, json.duel, json.exhaustUniqueLocations);
     Object.assign(gObj, json);
     return gObj;
 
@@ -144,6 +146,7 @@ export default class Game {
       nm: this.nm,
       npz: this.npz,
       showRoadName: this.showRoadName,
+      exhaustUniqueLocations: this.exhaustUniqueLocations,
     }
   }
 
@@ -457,17 +460,37 @@ export default class Game {
           key: 'notEnoughLocationsInMap'
         });
       }
-      locs = locs.sort(() => Math.random() - 0.5).slice(0, this.rounds).map((loc) => ({
-        // lng -> long
-        ...loc,
-        long: loc.lng,
-        lng: undefined
-      }));
-      while(locs.length < this.rounds) {
-        locs.push(locs[Math.floor(Math.random() * locs.length)]);
+
+      let finalLocs = [];
+      let uniqueLocs = map.data.map(loc => ({ ...loc, long: loc.lng, lng: undefined }));
+
+      if (this.exhaustUniqueLocations) {
+          let shuffledUniqueLocs = [...uniqueLocs].sort(() => Math.random() - 0.5);
+
+          if (this.rounds <= shuffledUniqueLocs.length) {
+              finalLocs = shuffledUniqueLocs.slice(0, this.rounds);
+          } else {
+              finalLocs = [...shuffledUniqueLocs];
+              let remainingRounds = this.rounds - finalLocs.length;
+
+              while (remainingRounds > 0) {
+                  let reshuffled = [...uniqueLocs].sort(() => Math.random() - 0.5);
+                  let toAdd = reshuffled.slice(0, remainingRounds);
+                  finalLocs.push(...toAdd);
+                  remainingRounds -= toAdd.length;
+              }
+          }
+      } else {
+          if (uniqueLocs.length > 0) {
+              for (let i = 0; i < this.rounds; i++) {
+                  finalLocs.push(uniqueLocs[Math.floor(Math.random() * uniqueLocs.length)]);
+              }
+          } else {
+              finalLocs = [];
+          }
       }
 
-      this.locations = locs;
+      this.locations = finalLocs;
 
       this.sendAllPlayers({
         type: 'generating',

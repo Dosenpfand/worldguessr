@@ -129,6 +129,22 @@ checked={multiplayerState.createOptions.timePerRound === 60*60*24}
 
 <button className="goBtn" onClick={() => setSelectCountryModalShown(true)} >{text("change")}</button>
 
+<div>
+    <label htmlFor="exhaustUniqueLocations">{text('exhaustUniqueLocations')}</label>
+    <input type="checkbox"
+           id="exhaustUniqueLocations"
+           checked={multiplayerState.createOptions.exhaustUniqueLocations !== false} // Default to true if undefined
+           onChange={(e) => {
+               setMultiplayerState(prev => ({
+                   ...prev,
+                   createOptions: {
+                       ...prev.createOptions,
+                       exhaustUniqueLocations: e.target.checked
+                   }
+               }));
+           }} />
+</div>
+
 <br/>
 
 </div>
