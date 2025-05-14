@@ -152,7 +152,13 @@ export default function GameUI({ inCoolMathGames, miniMapShown, setMiniMapShown,
   const [showClueBanner, setShowClueBanner] = useState(false);
 
 
-   const isStartingDuel = (multiplayerState && multiplayerState.inGame && multiplayerState?.gameData?.state === 'getready' && multiplayerState?.gameData?.curRound === 1)
+  const isStartingDuel = (multiplayerState && multiplayerState.inGame && multiplayerState?.gameData?.state === 'getready' && multiplayerState?.gameData?.curRound === 1);
+
+  // Determine multiplayer display states based on subState
+  const isMultiplayerGetReady = multiplayerState?.inGame && multiplayerState.gameData?.state === 'getready';
+  const isShowingMultiplayerResults = isMultiplayerGetReady && multiplayerState.gameData?.subState === 'results';
+  const isShowingMultiplayerLeaderboard = (isMultiplayerGetReady && multiplayerState.gameData?.subState === 'leaderboard') || (multiplayerState?.inGame && multiplayerState.gameData?.state === 'end');
+  const showMapWidgetAnswer = isShowingMultiplayerResults || (showAnswer && !multiplayerState?.inGame); // Combine conditions for MapWidget
 
   useEffect(() => {
     if(showAnswer) {
@@ -540,9 +546,9 @@ button1Press={() =>{
         if(mapPinned) return;
         // todo: if mouse down, don't collapse
         setMiniMapExpanded(false)
-      }} className={`miniMap ${miniMapExpanded ? 'mapExpanded' : ''} ${(miniMapShown||showAnswer)&&(!singlePlayerRound?.done && ((!showPanoOnResult && showAnswer) || (!showAnswer))) ? 'shown' : ''} ${showAnswer ? 'answerShown' : 'answerNotShown'} ${miniMapFullscreen&&miniMapExpanded ? 'fullscreen' : ''}`}>
+      }} className={`miniMap ${miniMapExpanded ? 'mapExpanded' : ''} ${(miniMapShown || showMapWidgetAnswer)&&(!singlePlayerRound?.done && ((!showPanoOnResult && showMapWidgetAnswer) || (!showMapWidgetAnswer))) ? 'shown' : ''} ${showMapWidgetAnswer ? 'answerShown' : 'answerNotShown'} ${miniMapFullscreen&&miniMapExpanded ? 'fullscreen' : ''}`}>
 
-{!showAnswer && (
+{!showMapWidgetAnswer && (
 <div className="mapCornerBtns desktop" style={{ visibility: miniMapExpanded ? 'visible' : 'hidden' }}>
           <button className="cornerBtn" onClick={() => {
             setMiniMapFullscreen(!miniMapFullscreen)
@@ -561,10 +567,10 @@ button1Press={() =>{
           </button>
         </div>
 )}
-        <MapWidget shown={latLong && !loading} focused={miniMapExpanded} options={options} ws={ws} gameOptions={gameOptions} answerShown={showAnswer} session={session} showHint={hintShown} pinPoint={pinPoint} setPinPoint={setPinPoint} guessed={false} guessing={false} location={latLong} setKm={setKm} multiplayerState={multiplayerState} />
+        <MapWidget shown={latLong && !loading} focused={miniMapExpanded} options={options} ws={ws} gameOptions={gameOptions} answerShown={showMapWidgetAnswer} session={session} showHint={hintShown} pinPoint={pinPoint} setPinPoint={setPinPoint} guessed={false} guessing={false} location={latLong} setKm={setKm} multiplayerState={multiplayerState} />
 
 
-        <div className={`miniMap__btns ${showAnswer ? 'answerShownBtns' : ''}`}>
+        <div className={`miniMap__btns ${showMapWidgetAnswer ? 'answerShownBtns' : ''}`}>
           <button className={`miniMap__btn ${!pinPoint||(multiplayerState?.inGame && multiplayerState?.gameData?.players.find(p => p.id === multiplayerState?.gameData?.myId)?.final) ? 'unavailable' : ''} guessBtn`} disabled={!pinPoint||(multiplayerState?.inGame && multiplayerState?.gameData?.players.find(p => p.id === multiplayerState?.gameData?.myId)?.final)} onClick={guess}>
            {multiplayerState?.inGame && multiplayerState?.gameData?.players.find(p => p.id === multiplayerState?.gameData?.myId)?.final ? multiplayerState?.gameData?.players?.reduce((acc, cur) => {if(cur.final) return acc - 1;return acc;}, multiplayerState?.gameData?.players.length) > 0 ? `${text("waitingForPlayers", {p:multiplayerState?.gameData?.players?.reduce((acc, cur) => {if(cur.final) return acc - 1;return acc;}, multiplayerState?.gameData?.players.length)})}...` : `${text("waiting")}...` : text("guess")}
             </button>
@@ -661,14 +667,14 @@ text("round", {r:multiplayerState?.gameData?.curRound, mr: multiplayerState?.gam
           )
         }
 
-        {multiplayerState && multiplayerState.inGame && !multiplayerState?.gameData?.duel && multiplayerState?.gameData?.state === 'getready' && multiplayerState?.gameData?.curRound === 1 && (
+        {multiplayerState && multiplayerState.inGame && !multiplayerState?.gameData?.duel && isMultiplayerGetReady && multiplayerState?.gameData?.curRound === 1 && (
           <BannerText text={
             text("gameStartingIn", {t:timeToNextMultiplayerEvt})
           } shown={true} />
         )}
 
 
-        {multiplayerState && multiplayerState.inGame && !multiplayerState?.gameData?.duel && ((multiplayerState?.gameData?.state === 'getready' && timeToNextMultiplayerEvt < 5 && multiplayerState?.gameData?.curRound !== 1 && multiplayerState?.gameData?.curRound <= multiplayerState?.gameData?.rounds)||(multiplayerState?.gameData?.state === "end")) && (
+        {multiplayerState && multiplayerState.inGame && !multiplayerState?.gameData?.duel && isShowingMultiplayerLeaderboard && (
           <PlayerList multiplayerState={multiplayerState} playAgain={() => {
             backBtnPressed(true, "unranked")
           }} backBtn={() => {
@@ -694,7 +700,7 @@ text("round", {r:multiplayerState?.gameData?.curRound, mr: multiplayerState?.gam
 
 <EndBanner
 countryStreaksEnabled={gameOptions?.location === "all"}
-singlePlayerRound={singlePlayerRound} onboarding={onboarding} countryGuesser={countryGuesser} countryGuesserCorrect={countryGuesserCorrect} options={options} countryStreak={countryStreak} lostCountryStreak={lostCountryStreak} xpEarned={xpEarned} usedHint={hintShown} session={session}  guessed={showAnswer} latLong={latLong} pinPoint={pinPoint} fullReset={()=>{
+singlePlayerRound={singlePlayerRound} onboarding={onboarding} countryGuesser={countryGuesser} countryGuesserCorrect={countryGuesserCorrect} options={options} countryStreak={countryStreak} lostCountryStreak={lostCountryStreak} xpEarned={xpEarned} usedHint={hintShown} session={session}  guessed={showMapWidgetAnswer || (showAnswer && onboarding)} latLong={latLong} pinPoint={pinPoint} fullReset={()=>{
   loadLocationFunc()
 
   }} km={km} setExplanationModalShown={setExplanationModalShown} multiplayerState={multiplayerState} toggleMap={() => {

@@ -336,7 +336,7 @@ setInterval(() => {
   ipDuelRequestsLast10.clear();
 }, 10000);
 
-function updateGameOptions(game, rounds=5, timePerRound=30, location="all", nm=false, npz=false, showRoadName=true, displayLocation="World") {
+function updateGameOptions(game, rounds=5, timePerRound=30, location="all", nm=false, npz=false, showRoadName=true, displayLocation="World", waitBetweenRounds=10) {
           // maxDist no longer required-> can be pulled from community map
           if (!location) return;
           if (!rounds || !timePerRound) {
@@ -361,6 +361,7 @@ function updateGameOptions(game, rounds=5, timePerRound=30, location="all", nm=f
           if(!showRoadName) showRoadName = false;
 
           game.timePerRound = timePerRound * 1000;
+          game.waitBetweenRounds = waitBetweenRounds * 1000;
           game.nm = !!nm;
           game.npz = !!npz;
           game.showRoadName = !!showRoadName;
@@ -809,8 +810,8 @@ app.ws('/wg', {
         const game = games.get(player.gameId);
         // make sure player is host
         if(game.players[player.id].host) {
-          let { rounds, timePerRound, location, nm, npz, showRoadName, displayLocation } = json;
-          updateGameOptions(game, rounds, timePerRound, location, nm, npz, showRoadName, displayLocation);
+          let { rounds, timePerRound, location, nm, npz, showRoadName, displayLocation, waitBetweenRounds } = json;
+          updateGameOptions(game, rounds, timePerRound, location, nm, npz, showRoadName, displayLocation, waitBetweenRounds);
 
         }
       }
@@ -1223,28 +1224,35 @@ try {
       // start games that have at least 2 players
       if (game.state === 'waiting' && playerCnt > 1 && game.public && game.rounds === game.locations.length) {
         game.start();
-      } else if (game.state === 'getready' && Date.now() > game.nextEvtTime) {
+      } else if (game.state === 'getready' && game.subState === 'results' && Date.now() > game.nextEvtTime) {
+        // Finished showing results, now show leaderboard
+        game.subState = 'leaderboard';
+        game.nextEvtTime = Date.now() + game.waitBetweenRounds / 2;
+        game.sendStateUpdate();
+      } else if (game.state === 'getready' && game.subState === 'leaderboard' && Date.now() > game.nextEvtTime) {
+        // Finished showing leaderboard, move to next round or end
         if(game.curRound > game.rounds || game.readyToEnd) {
           game.end();
           // game over
-
         } else {
-        game.state = 'guess';
-        game.nextEvtTime = Date.now() + game.timePerRound;
-        game.clearGuesses();
-
-        game.sendStateUpdate();
+          game.state = 'guess';
+          game.subState = null;
+          game.nextEvtTime = Date.now() + game.timePerRound;
+          game.clearGuesses();
+          game.sendStateUpdate();
         }
-
       } else if (game.state === 'guess' && Date.now() > game.nextEvtTime) {
         game.givePoints();
         if(game.curRound <= game.rounds) {
           game.curRound++;
           game.state = 'getready';
-          game.nextEvtTime = Date.now() + game.waitBetweenRounds - (game.curRound > game.rounds ? 5000: 0);
+          game.subState = 'results'; // Start by showing results
+          // Show results for half the wait time
+          // Adjust final round display time if needed (e.g., less time if it's the last round before game over)
+          const isFinalRoundTransition = game.curRound > game.rounds;
+          const resultsDisplayTime = game.waitBetweenRounds / 2 - (isFinalRoundTransition ? 5000 : 0);
+          game.nextEvtTime = Date.now() + Math.max(1000, resultsDisplayTime); // Ensure at least 1 second
           game.sendStateUpdate();
-
-
         } else {
           // game over
           game.end()

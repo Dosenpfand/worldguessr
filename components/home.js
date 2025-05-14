@@ -69,6 +69,7 @@ const initialMultiplayerState = {
   createOptions: {
     rounds: 5,
     timePerRound: 30,
+    waitBetweenRounds: 10,
     location: "all",
     displayLocation: "All countries",
     progress: false
@@ -992,7 +993,17 @@ setShowCountryButtons(false)
 
     if(action === "setPrivateGameOptions" && multiplayerState?.inGame && multiplayerState?.gameData?.host && multiplayerState?.gameData?.state === "waiting") {
     setMultiplayerState((prev) => {
-      ws.send(JSON.stringify({ type: "setPrivateGameOptions", rounds: prev.createOptions.rounds, timePerRound: prev.createOptions.timePerRound, nm: prev.createOptions.nm, npz: prev.createOptions.npz, showRoadName: prev.createOptions.showRoadName, location: prev.createOptions.location, displayLocation: prev.createOptions.displayLocation }))
+      ws.send(JSON.stringify({
+        type: "setPrivateGameOptions",
+        rounds: prev.createOptions.rounds,
+        timePerRound: prev.createOptions.timePerRound,
+        waitBetweenRounds: prev.createOptions.waitBetweenRounds,
+        nm: prev.createOptions.nm,
+        npz: prev.createOptions.npz,
+        showRoadName: prev.createOptions.showRoadName,
+        location: prev.createOptions.location,
+        displayLocation: prev.createOptions.displayLocation
+      }))
       return prev;
     })
     }
@@ -2504,4 +2515,3 @@ if(window.inCrazyGames) {
     </>
   )
 }
-

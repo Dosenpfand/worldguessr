@@ -19,6 +19,7 @@ export default class Game {
     this.code = publicLobby ? null : make6DigitCode();
     this.players = {};
     this.state = 'waiting'; // [waiting, getready, guess, end]
+    this.subState = null; // [null, results, leaderboard] - used within 'getready' state
     this.public = publicLobby;
     this.duel = isDuel;
     this.timePerRound = 30000;
@@ -26,7 +27,6 @@ export default class Game {
     if(isDuel) {
       this.waitBetweenRounds = 6000;
       this.timePerRound = 60000;
-
     }
     this.maxDist = 20000;
     this.startTime = null;
@@ -56,6 +56,7 @@ export default class Game {
       code: this.code,
       players: this.players,
       state: this.state,
+      subState: this.subState,
       public: this.public,
       duel: this.duel,
       timePerRound: this.timePerRound,
@@ -122,6 +123,7 @@ export default class Game {
     return {
       type: 'game',
       state: this.state,
+      subState: this.subState,
       timePerRound: this.timePerRound,
       waitBetweenRounds: this.waitBetweenRounds,
       startTime: this.startTime,
@@ -269,6 +271,7 @@ export default class Game {
     const state = {
       type: 'game',
       state: this.state,
+      subState: this.subState,
       curRound: this.curRound,
       maxPlayers: this.maxPlayers,
       nextEvtTime: this.nextEvtTime,
@@ -339,8 +342,10 @@ export default class Game {
       return;
     }
     this.state = 'getready';
+    this.subState = 'results'; // Set initial subState
     this.startTime = Date.now();
-    this.nextEvtTime = this.startTime + 5000;
+    // Set next event time for the end of the 'results' phase
+    this.nextEvtTime = this.startTime + this.waitBetweenRounds / 2;
     this.curRound = 1;
 
 
