@@ -9,7 +9,7 @@ import { Filter } from 'bad-words';
 import Game from './classes/Game.js';
 import setCorsHeaders from '../serverUtils/setCorsHeaders.js';
 import findLatLongRandom from '../components/findLatLongServer.js';
-import { Webhook } from "discord-webhook-node";
+// import { Webhook } from "discord-webhook-node"; // Discord Webhook removed
 
 import cityGen from '../serverUtils/cityGen.js';
 import lookup from "coordinate_to_country"
@@ -118,52 +118,11 @@ if (!process.env.MONGODB) {
 function log(...args) {
   console.log(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }), ...args);
 
-  // if(!dev) {
-    // if(process.env.DISCORD_WEBHOOK_WS) {
-    //   const hook = new Webhook(process.env.DISCORD_WEBHOOK_WS);
-    //   hook.setUsername("Logs"+(dev ? ' - Dev' : ''));
-    //   hook.send(args.join(' '));
-    // }
-  // }
+  // Discord Webhook logging removed
 }
 
 
-// update console log
-// if(!dev) {
-// console.log = function () {
-//   if (dev) {
-//     return;
-//   }
-//   if(process.env.DISCORD_WEBHOOK_WS) {
-
-//   const args = Array.from(arguments);
-//   const timeInCST = new Date().toLocaleString("en-US", { timeZone: "America/Chicago" });
-//   args.unshift(timeInCST);
-//   const hook = new Webhook(process.env.DISCORD_WEBHOOK_WS);
-//   hook.setUsername("Logs");
-//   hook.send(args.join(' '));
-
-
-//   }
-
-// }
-
-// console.error = function () {
-//   if (dev) {
-//     return;
-//   }
-//   if(process.env.DISCORD_WEBHOOK_WS) {
-
-//   const args = Array.from(arguments);
-//   const timeInCST = new Date().toLocaleString("en-US", { timeZone: "America/Chicago" });
-//   args.unshift(timeInCST);
-//   args.unshift('**ERROR!**');
-//   const hook = new Webhook(process.env.DISCORD_WEBHOOK_WS);
-//   hook.setUsername("Logs");
-//   hook.send(args.join(' '));
-//   }
-// }
-// }
+// Discord Webhook console overrides removed
 
 
 blockedAt((time, stack) => {

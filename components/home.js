@@ -18,9 +18,6 @@ import countryMaxDists from '../public/countryMaxDists.json';
 import { useTranslation } from '@/components/useTranslations'
 import useWindowDimensions from "@/components/useWindowDimensions";
 
-import NitroAd from "@/components/bannerAd";
-import Ad from "@/components/bannerAdAdinplay";
-
 import Script from "next/script";
 import SettingsModal from "@/components/settingsModal";
 import sendEvent from "@/components/utils/sendEvent";
@@ -54,7 +51,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import LeagueModal from "./leagueModal";
 import haversineDistance from "./utils/haversineDistance";
 import StreetView from "./streetview/streetView";
-import Stats from "stats.js";
+// import Stats from "stats.js"; // Stats.js removed
 import SvEmbedIframe from "./streetview/svHandler";
 
 const initialMultiplayerState = {
@@ -84,7 +81,7 @@ const initialMultiplayerState = {
 export default function Home({ }) {
 
   const { width, height } = useWindowDimensions();
-  const statsRef = useRef();
+  // const statsRef = useRef(); // Stats.js removed
 
   const [session, setSession] = useState(false);
   const { data: mainSession } = useSession();
@@ -114,59 +111,7 @@ export default function Home({ }) {
   const [multiplayerError, setMultiplayerError] = useState(null);
   const [miniMapShown, setMiniMapShown] = useState(false)
 
-  useEffect(() => {
-    let hideInt = setInterval(() => {
-      if(document.getElementById("cmpPersistentLink")) {
-        document.getElementById("cmpPersistentLink").style.display = "none";
-        clearInterval(hideInt);
-      }
-    }, 2000);
-
-    return () => clearInterval(hideInt);
-  }, [])
-
-  useEffect(() => {
-    const {ramUsage} = options;
-    if(ramUsage) {
-      if(!statsRef.current) {
-    var stats = new Stats();
-stats.showPanel( 2 ); // 0: fps, 1: ms, 2: mb, 3+: custom
-
-// move a bit lower
-stats.dom.style.transform = "translate(10px, 150px)";
-stats.dom.style.pointerEvents = "none";
-
-document.body.appendChild( stats.dom );
-statsRef.current = stats;
-
-      } else {
-        statsRef.current.dom.style.display = "";
-      }
-    } else {
-      if(statsRef.current) {
-        statsRef.current.dom.style.display = "none";
-      }
-    }
-
-    let id = null;
-
-    function animate() {
-      statsRef.current.begin();
-      // monitored code goes here
-      statsRef.current.end();
-
-      id = requestAnimationFrame( animate );
-    }
-    if(statsRef.current)
-    animate();
-
-    return () => {
-
-      cancelAnimationFrame(id);
-    }
-
-
-  },[ options?.ramUsage] )
+  // Stats.js useEffect removed
 
   let login = null;
   if(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
@@ -213,7 +158,7 @@ statsRef.current = stats;
 
 
   const [isApp, setIsApp] = useState(false);
-  const [inCrazyGames, setInCrazyGames] = useState(false);
+  const inCrazyGames = false; // Effectively disable CrazyGames SDK logic
   const [maintenance, setMaintenance] = useState(false);
   const [leagueModal, setLeagueModal] = useState(false);
 
@@ -283,74 +228,10 @@ statsRef.current = stats;
     if(window.location.search.includes("app=true")) {
       setIsApp(true);
     }
-    if(window.location.search.includes("instantJoin=true")) {
-      // crazygames
-    }
+    // if(window.location.search.includes("instantJoin=true")) { // CrazyGames related
+    // }
 
-
-    async function crazyAuthListener() {
-      console.log("crazygames auth listener")
-      const user = await window.CrazyGames.SDK.user.getUser();
-      if(user) {
-        console.log("crazygames user", user)
-        const token = await window.CrazyGames.SDK.user.getUserToken();
-        if(token && user.username) {
-          // /api/crazyAuth
-          fetch(clientConfigData.apiUrl+"/api/crazyAuth", {
-            method: "POST",
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ token, username: user.username })
-          }).then((res) => res.json()).then((data) => {
-        console.log("crazygames auth", token, user, data)
-            try {
-            window.CrazyGames.SDK.game.loadingStop();
-            } catch(e) {}
-            if(data.secret && data.username) {
-              setSession({ token: { secret: data.secret, username: data.username } })
-              // verify the ws
-              window.verifyPayload = JSON.stringify({ type: "verify", secret: data.secret, username: data.username });
-
-              setWs((prev) => {
-
-                if(prev) {
-                  console.log("sending verify")
-
-                  prev.send(window.verifyPayload)
-                }
-                return prev;
-              });
-            } else {
-              toast.error("CrazyGames auth failed")
-            }
-          }).catch((e) => {
-            try {
-            window.CrazyGames.SDK.game.loadingStop();
-            } catch(e) {}
-            console.error("crazygames auth failed", e)
-          });
-
-        }
-      } else {
-        console.log("crazygames user not logged in")
-        // user not logged in
-        // verify with not_logged_in
-        let rc = gameStorage.getItem("rejoinCode");
-
-        window.verifyPayload = JSON.stringify({ type: "verify", secret: "not_logged_in", username: "not_logged_in",
-          rejoinCode: rc
-         });
-        setWs((prev) => {
-          if(prev) {
-            prev.send(window.verifyPayload)
-          } else {
-            console.log("no ws, waiting for connection")
-          }
-          return prev;
-        });
-      }
-    }
+    // crazyAuthListener removed
 
     function finish() {
       const onboardingCompletedd = gameStorage.getItem("onboarding");
@@ -367,57 +248,14 @@ statsRef.current = stats;
             openMap(mapSlug)
       }
           }
-    if(window.location.search.includes("crazygames")) {
-      setInCrazyGames(true);
-      window.inCrazyGames = true;
-      setLoading(true)
+    // CrazyGames SDK initialization and listener logic removed
+    // All CrazyGames specific logic will be bypassed due to inCrazyGames being false
+    finish(); // Call finish directly if not in CrazyGames context (which is now always)
 
-      window.onCrazyload = () => {
-
-      // initialize the sdk
-      try {
-        console.log("init crazygames sdk", window.CrazyGames)
-
-         window.CrazyGames.SDK.init().then(async () => {
-          console.log("sdk initialized")
-          setLoading(false)
-          try {
-          window.CrazyGames.SDK.game.loadingStart();
-          } catch(e) {}
-
-          crazyAuthListener().then(() => {
-            // check if onboarding is done
-            finish()
-          })
-
-
-          window.CrazyGames.SDK.user.addAuthListener(crazyAuthListener);
-
-         }).catch((e) => {
-          finish()
-          console.error("crazygames sdk init failed", e)
-          setLoading(false)
-        })
-      } catch(e) {
-        console.error("crazygames sdk init failed", e)
-        finish()
-        setLoading(false)
-      }
-    }
-
-    if(window.CrazyGames) {
-      window.onCrazyload();
-    }
-    }
     initialMultiplayerState.createOptions.displayLocation = text("allCountries")
 
-    return () => {
-      try {
-        window.CrazyGames.SDK.user.removeAuthListener(crazyAuthListener);
-      } catch(e){
-        console.error("crazygames remove auth listener error", e)
-      }
-    }
+    // return () => { // CrazyGames SDK removeAuthListener removed
+    // }
 
   }, []);
 
@@ -480,19 +318,8 @@ statsRef.current = stats;
   const [allLocsArray, setAllLocsArray] = useState([]);
   function startOnboarding() {
 
-    if(inCrazyGames) {
-      // make sure its not an invite link
-      const code = window.CrazyGames.SDK.game.getInviteParam("code")
-      if(code && code.length === 6) {
-        return;
-      }
-
-      // make sure tis not already completed
-      const onboarding = gameStorage.getItem("onboarding");
-      if(onboarding === "done") {
-        return;
-      }
-    }
+    // if(inCrazyGames) { // CrazyGames related logic removed
+    // }
 
 setScreen("onboarding")
 
@@ -581,7 +408,7 @@ setShowCountryButtons(false)
     try {
     const onboarding = gameStorage.getItem("onboarding");
     // check url
-    const cg = window.location.search.includes("crazygames");
+    // const cg = window.location.search.includes("crazygames"); // CrazyGames related
     const specifiedMapSlug = window.location.search.includes("map=");
     console.log("onboarding", onboarding, specifiedMapSlug)
     // make it false just for testing
@@ -591,7 +418,8 @@ setShowCountryButtons(false)
 
 
     }
-      else if(specifiedMapSlug && !cg) setOnboardingCompleted(true)
+      // else if(specifiedMapSlug && !cg) setOnboardingCompleted(true) // Adjusted condition
+      else if(specifiedMapSlug) setOnboardingCompleted(true)
       else setOnboardingCompleted(false)
   } catch(e) {
     console.error(e, "onboard");
@@ -716,36 +544,36 @@ setShowCountryButtons(false)
 
 
       // const isPPC = window.location.search.includes("cpc=true");
-        if(inIframe() && window.adBreak && !inCrazyGames) {
-          console.log("trying to show preroll")
-          window.onboardPrerollEnd = false;
-          setLoading(true)
-          window.adBreak({
-            type: "preroll",
-            adBreakDone: function(e) {
-              if(window.onboardPrerollEnd) return;
-              setLoading(false)
-              window.onboardPrerollEnd = true;
-              sendEvent("interstitial", { type: "preroll", ...e })
-              startOnboarding()
-            }
-          })
+        // if(inIframe() && window.adBreak && !inCrazyGames) {
+        //   console.log("trying to show preroll")
+        //   window.onboardPrerollEnd = false;
+        //   setLoading(true)
+        //   window.adBreak({
+        //     type: "preroll",
+        //     adBreakDone: function(e) {
+        //       if(window.onboardPrerollEnd) return;
+        //       setLoading(false)
+        //       window.onboardPrerollEnd = true;
+        //       sendEvent("interstitial", { type: "preroll", ...e })
+        //       startOnboarding()
+        //     }
+        //   })
 
-          setTimeout(() => {
-            if(!window.onboardPrerollEnd) {
-              window.onboardPrerollEnd = true;
-              console.log("preroll timeout")
-              setLoading(false)
-              startOnboarding()
-            }
-          }, 3000)
-        } else if(!inCrazyGames) {
-
+        //   setTimeout(() => {
+        //     if(!window.onboardPrerollEnd) {
+        //       window.onboardPrerollEnd = true;
+        //       console.log("preroll timeout")
+        //       setLoading(false)
+        //       startOnboarding()
+        //     }
+        //   }, 3000)
+        // } else
+        if(!inCrazyGames) {
           startOnboarding()
         }
       }
     }
-  }, [onboardingCompleted])
+  }, [onboardingCompleted, loading, inCrazyGames])
 
   useEffect(() => {
     if(session && session.token && session.token.username && !inCrazyGames) {
@@ -867,7 +695,7 @@ setShowCountryButtons(false)
       console.log("sending verify", ws)
       ws.send(JSON.stringify({ type: "verify", secret: session.token.secret, username: session.token.username }))
     }
-  }, [session?.token?.secret, ws])
+  }, [session?.token?.secret, ws, inCrazyGames]) // Added inCrazyGames to dependencies, though it's const false
 
   const { t: text } = useTranslation("common");
 
@@ -1041,8 +869,8 @@ setShowCountryButtons(false)
 
 
       console.log("connected to ws", window.verifyPayload)
-      if(!inCrazyGames && !window.location.search.includes("crazygames")) {
-
+      // if(!inCrazyGames && !window.location.search.includes("crazygames")) { // CrazyGames related logic removed
+      // Always take this path now
           const tz = moment.tz.guess();
           let secret = "not_logged_in";
           try {
@@ -1061,12 +889,10 @@ setShowCountryButtons(false)
             window.verified = true;
           }
         ws.send(JSON.stringify({ type: "verify", secret, tz, rejoinCode: gameStorage.getItem("rejoinCode") }))
-      } else if(window.verifyPayload) {
-        console.log("sending verify from verifyPayload")
-        ws.send(window.verifyPayload)
-
-
-      }
+      // } else if(window.verifyPayload) { // CrazyGames related logic removed
+      //   console.log("sending verify from verifyPayload")
+      //   ws.send(window.verifyPayload)
+      // }
       } else {
         alert("could not connect to server")
       }
@@ -1078,25 +904,8 @@ setShowCountryButtons(false)
 
   useEffect(() => {
 
-    if(inCrazyGames || window.poki) {
-      if(screen === "home") {
-        console.log("gameplay stop")
-        try {
-          window.CrazyGames.SDK.game.gameplayStop();
-        } catch(e) {}
-        try {
-          if(window.poki) window.PokiSDK.gameplayStop();
-        } catch(e) {}
-      } else {
-        console.log("gameplay start")
-        try {
-          window.CrazyGames.SDK.game.gameplayStart();
-        } catch(e) {}
-        try {
-          if(window.poki) window.PokiSDK.gameplayStart();
-        } catch(e) {}
-      }
-    }
+    // if(inCrazyGames /* || window.poki */) { // CrazyGames and Poki SDK related logic removed
+    // }
   }, [screen, inCrazyGames])
 
   useEffect(() => {
@@ -1113,7 +922,8 @@ setShowCountryButtons(false)
 
           // check if joined via invite link
           try {
-            let code = inCrazyGames ?  window.CrazyGames.SDK.game.getInviteParam("code") : window.localStorage.getItem("joinCode");
+            // let code = inCrazyGames ?  window.CrazyGames.SDK.game.getInviteParam("code") : window.localStorage.getItem("joinCode"); // CrazyGames related
+            let code = window.localStorage.getItem("joinCode");
             let instantJoin = window.location.search.includes("instantJoin");
 
 
@@ -1270,13 +1080,13 @@ setShowCountryButtons(false)
             setMultiplayerChatEnabled(true)
           }
 
-          try {
-          if(data.state === "waiting" && inCrazyGames && data.host) {
-            const link = window.CrazyGames.SDK.game.showInviteButton({ code: data.code });
-          } else {
-            window.CrazyGames.SDK.game.hideInviteButton();
-          }
-        } catch(e) {}
+          // try { // CrazyGames related logic removed
+          // // if(data.state === "waiting" && inCrazyGames && data.host) {
+          // //   const link = window.CrazyGames.SDK.game.showInviteButton({ code: data.code });
+          // // } else {
+          // //   window.CrazyGames.SDK.game.hideInviteButton();
+          // // }
+          // } catch(e) {}
 
         // console.log('got game options', data)
         setGameOptions((prev) => ({
@@ -1634,33 +1444,24 @@ setShowCountryButtons(false)
   }
 
   function crazyMidgame(adFinished = () => {}) {
-    if(window.inCrazyGames && window.CrazyGames.SDK.environment !== "disabled") {
-      try {
-    const callbacks = {
-      adFinished: () => adFinished(),
-      adError: (error) => adFinished(),
-      adStarted: () => console.log("Start midgame ad"),
-    };
-    window.CrazyGames.SDK.ad.requestAd("midgame", callbacks);
-  } catch(e) {
-    console.log("error requesting midgame ad", e)
-    adFinished()
-  }
-  } else if(process.env.NEXT_PUBLIC_COOLMATH === "true" && Date.now() - window.lastCoolmathAd > 120000) {
+    // if(window.inCrazyGames && window.CrazyGames.SDK.environment !== "disabled") { // CrazyGames ad logic removed
+    // } else
+    if(process.env.NEXT_PUBLIC_COOLMATH === "true" && Date.now() - (window.lastCoolmathAd || 0) > 120000) {
     try {
-      window.lastCoolmathAd = Date.now();
-      function onEnd() {
-        adFinished()
-        console.log("End midgame ad")
-        document.removeEventListener("adBreakComplete", onEnd);
-      }
-      function onStart() {
-        console.log("Start midgame ad")
-        document.removeEventListener("adBreakStart", onStart);
-      }
-      window.cmgAdBreak();
-      document.addEventListener("adBreakStart", onStart);
-      document.addEventListener("adBreakComplete", onEnd);
+      // window.lastCoolmathAd = Date.now();
+      // function onEnd() {
+      //   adFinished()
+      //   console.log("End midgame ad")
+      //   document.removeEventListener("adBreakComplete", onEnd);
+      // }
+      // function onStart() {
+      //   console.log("Start midgame ad")
+      //   document.removeEventListener("adBreakStart", onStart);
+      // }
+      // window.cmgAdBreak();
+      // document.addEventListener("adBreakStart", onStart);
+      // document.addEventListener("adBreakComplete", onEnd);
+      adFinished(); // Directly call adFinished for Coolmath
   } catch(e) {
     console.log("error requesting midgame ad", e)
     adFinished()
@@ -1707,11 +1508,8 @@ setShowCountryButtons(false)
         type: 'leaveGame'
       }))
 
-      if(inCrazyGames) {
-        try {
-          window.CrazyGames.SDK.game.hideInviteButton();
-        } catch(e) {}
-      }
+      // if(inCrazyGames) { // CrazyGames related logic removed
+      // }
 
 
       setMultiplayerState((prev) => {
@@ -2044,15 +1842,6 @@ setShowCountryButtons(false)
       {ChatboxMemo}
     <ToastContainer pauseOnFocusLoss={false} />
 
-    <div className="videoAdParent hidden">
-  <div className="videoAdPlayer">
-    <div className="messageContainer">
-      <p className="thankYouMessage">{text("videoAdThanks")}<br/>{text("enjoyGameplay")}</p>
-    </div>
-    <div id="videoad"></div>
-  </div>
-</div>
-
 { typeof coolmathSplash === "number" && (
   // black background
   <div style={{
@@ -2255,28 +2044,6 @@ setShowCountryButtons(false)
               </>
             )}
             </div>
-
-          <div style={{ marginTop: "20px" }}>
-          <center>
-              { !loading && screen === "home"  && !inCrazyGames && !inCoolMathGames &&(!session?.token?.supporter) && (
-    <Ad inCrazyGames={inCrazyGames} screenH={height} types={[[320,50],[728,90],[970,90],[970,250]]} screenW={width} />
-              )}
-    </center>
-
-    <br/>
-    <center>
-              { !loading && screen === "home"  && !inCrazyGames && !inCoolMathGames &&(!session?.token?.supporter) &&
-
-                height > 600 && width > 1000 &&
-              (
-    <NitroAd
-    unit={"worldguessr_home_ad"}
-    inCrazyGames={inCrazyGames} screenH={height} types={[[320,50]]} screenW={width}
-                showAdvertisementText={false}
-    />
-              )}
-    </center>
-            </div>
           </div>
           </>
         )}
@@ -2409,105 +2176,22 @@ document.addEventListener('touchmove', e => {
           //   } catch(e) {}
             window.adInterval = 1800000;
 
+    // PokiSDK initialization removed
 
-            setTimeout(() => {
-            if(window.PokiSDK) {
-            console.log("Poki SDK found initialized")
-            window.PokiSDK.init().then(() => {
-    console.log("Poki SDK successfully initialized");
-    window.poki = true;
-    // fire your function to continue to game
-    window.PokiSDK.gameLoadingFinished();
+    // Microsoft Clarity removed
+    // (function(c,l,a,r,i,t,y){
+    //     c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    //     t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    //     y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    // })(window, document, "clarity", "script", "ndud94nvsg");
 
-}).catch(() => {
-    console.log("Initialized, something went wrong, load you game anyway");
-    // fire your function to continue to game
-});
-            }
-}, 1000);
+    // ad related code removed
 
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "ndud94nvsg");
-
-  	window.aiptag = window.aiptag || {cmd: []};
-	aiptag.cmd.display = aiptag.cmd.display || [];
-	aiptag.cmd.player = aiptag.cmd.player || [];
-
-	//CMP tool settings
-	aiptag.cmp = {
-		show: true,
-		position: "centered",  //centered, bottom
-		button: true,
-		buttonText: "Privacy settings",
-		buttonPosition: "bottom-left" //bottom-left, bottom-right, bottom-center, top-left, top-right
-	}
-   window.adsbygoogle = window.adsbygoogle || [];
-  window.adBreak = adConfig = function(o) {adsbygoogle.push(o);}
-   adConfig({preloadAdBreaks: 'on'});
-
-   aiptag.cmd.player.push(function() {
-	aiptag.adplayer = new aipPlayer({
-		AD_WIDTH: Math.min(Math.max(window.innerWidth, 300), 1066),
-		AD_HEIGHT: Math.min(Math.max(window.innerHeight, 150), 600),
-		AD_DISPLAY: 'modal-center', //default, fullscreen, fill, center, modal-center
-		LOADING_TEXT: 'loading advertisement',
-		PREROLL_ELEM: function(){ return document.getElementById('videoad'); },
-		AIP_COMPLETE: function (state) {
-  document.querySelector('.videoAdParent').classList.add('hidden');
-
-    console.log("Ad complete", state)
-			// The callback will be executed once the video ad is completed.
-      window.lastAdShown = Date.now();
-      try {
-      window.localStorage.setItem("lastAdShown", window.lastAdShown)
-    } catch(e) {}
-
-
-			if (typeof aiptag.adplayer.adCompleteCallback === 'function') {
-				aiptag.adplayer.adCompleteCallback(state);
-			}
-		}
-	});
-});
-
-window.show_videoad = function(callback) {
-// if in crazygame (window.inCrazyGames) dont show ads
-if(window.inCrazyGames) {
-  console.log("In crazygames, not showing ads")
-  callback("DISABLED");
-  return;
-}
-
-          if(window.disableVideoAds) {
-          console.log("Video ads disabled")
-            callback("DISABLED");
-            return;
-          }
-
-  if(window.lastAdShown + window.adInterval > Date.now()) {
-            callback("COOLDOWN");
-            return;
-          }
-
-	// Assign the callback to be executed when the ad is done
-	aiptag.adplayer.adCompleteCallback = callback;
-
-	// Check if the adslib is loaded correctly or blocked by adblockers etc.
-	if (typeof aiptag.adplayer !== 'undefined') {
-  console.log("Showing ad")
-  // remove 'hidden' class from the parent div
-  document.querySelector('.videoAdParent').classList.remove('hidden');
-		aiptag.cmd.player.push(function() { aiptag.adplayer.startVideoAd(); });
-	} else {
-   console.log("Adlib not loaded")
-		// Adlib didn't load; this could be due to an ad blocker, timeout, etc.
-		// Please add your script here that starts the content, this usually is the same script as added in AIP_COMPLETE.
-		aiptag.adplayer.aipConfig.AIP_COMPLETE();
-	}
-}
+    window.show_videoad = function(callback) {
+      console.log("Ads disabled, not showing video ad.");
+      callback("DISABLED"); // Or "SKIPPED" or "NO_FILL"
+      return;
+    }
 
   `}
         </Script>

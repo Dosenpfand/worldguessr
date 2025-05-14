@@ -1,7 +1,7 @@
 export default class gameStorage {
 
   static isCrazyGames() {
-    return window.inCrazyGames;
+    return false; // Effectively disable CrazyGames SDK for storage
   }
 
   static setItem(key, value) {
