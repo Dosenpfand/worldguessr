@@ -240,5 +240,6 @@
   "nameChangeInProgress": "Ваше имя изменяется на {{name}}, это может занять до 24 часов.",
   "nameChangeCooldown": "Вы сможете изменить имя снова через {{days}} дней",
   "disableTimer": "Отключить таймер",
-  "exhaustUniqueLocations": "Сначала исчерпать уникальные локации"
+  "exhaustUniqueLocations": "Сначала исчерпать уникальные локации",
+  "confirmLeaveGame": "Вы уверены, что хотите покинуть игру?"
 }

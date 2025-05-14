@@ -1488,6 +1488,15 @@ setShowCountryButtons(false)
 
 
   function backBtnPressed(queueNextGame = false, nextGameType) {
+    const isInGame = screen === "singleplayer" || multiplayerState?.inGame;
+
+    if (isInGame) {
+      const confirmLeave = window.confirm(text("confirmLeaveGame"));
+      if (!confirmLeave) {
+        return;
+      }
+    }
+
     setStreetViewShown(false)
     setOnboardingCompleted(true)
 

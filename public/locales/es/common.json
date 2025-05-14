@@ -241,5 +241,6 @@
   "nameChangeInProgress": "Su cambio de nombre a {{name}} está en proceso, puede tardar hasta 24 horas en actualizarse completamente.",
   "nameChangeCooldown": "Puede cambiar su nombre nuevamente en {{days}} días",
   "disableTimer": "Deshabilitar temporizador",
-  "exhaustUniqueLocations": "Agotar ubicaciones únicas primero"
+  "exhaustUniqueLocations": "Agotar ubicaciones únicas primero",
+  "confirmLeaveGame": "¿Estás seguro de que quieres salir del juego?"
 }
