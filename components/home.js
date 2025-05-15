@@ -236,7 +236,7 @@ export default function Home({ }) {
     function finish() {
       const onboardingCompletedd = gameStorage.getItem("onboarding");
       console.log("onboarding", onboardingCompletedd)
-      if(onboardingCompletedd !== "done") startOnboarding();
+      if(onboardingCompletedd !== "done") setOnboardingCompleted(true);
       else setOnboardingCompleted(true)
 
       if(window.location.search.includes("map=")) {
@@ -420,7 +420,7 @@ setShowCountryButtons(false)
     }
       // else if(specifiedMapSlug && !cg) setOnboardingCompleted(true) // Adjusted condition
       else if(specifiedMapSlug) setOnboardingCompleted(true)
-      else setOnboardingCompleted(false)
+      else setOnboardingCompleted(true)
   } catch(e) {
     console.error(e, "onboard");
     setOnboardingCompleted(true);
