@@ -15,6 +15,9 @@ ENV UWS_HTTP_MAX_HEADERS_SIZE=16384
 # Default port for Next.js (can be overridden at runtime)
 ENV PORT=3000
 
+ENV NEXT_PUBLIC_API_URL="api.gasser.xyz"
+ENV NEXT_PUBLIC_WS_HOST="ws.gasser.xyz"
+
 # Create app directory
 WORKDIR /usr/src/app
 

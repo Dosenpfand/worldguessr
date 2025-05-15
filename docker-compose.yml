@@ -11,13 +11,17 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-certificates:/certificates
+    networks:
+      - app-network
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      # HTTP to HTTPS redirect
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      # Let's Encrypt
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
       - "--certificatesresolvers.myresolver.acme.email=spam-guessr-certs@sad.bz"
       - "--certificatesresolvers.myresolver.acme.storage=/certificates/acme.json"
@@ -34,8 +38,9 @@ services:
       # PORT=3000
       # API_PORT=3001
       # WS_PORT=3002
-      NEXT_PUBLIC_API_URL: "api.gasser.xyz"
-      NEXT_PUBLIC_WS_HOST: "ws.gasser.xyz"
+      # NOTE: Have to be set at build time:
+      # NEXT_PUBLIC_API_URL: "api.gasser.xyz"
+      # NEXT_PUBLIC_WS_HOST: "ws.gasser.xyz"
     depends_on:
       - mongo
     networks:
@@ -47,17 +52,20 @@ services:
       - "traefik.http.routers.app1.rule=Host(`guessr.gasser.xyz`)"
       - "traefik.http.routers.app1.entrypoints=websecure"
       - "traefik.http.routers.app1.tls.certresolver=myresolver"
-      - "traefik.http.services.app1.loadbalancer.server.port=3000"
+      - "traefik.http.routers.app1.service=service1"
+      - "traefik.http.services.service1.loadbalancer.server.port=3000"
 
       - "traefik.http.routers.app2.rule=Host(`api.gasser.xyz`)"
       - "traefik.http.routers.app2.entrypoints=websecure"
       - "traefik.http.routers.app2.tls.certresolver=myresolver"
-      - "traefik.http.services.app2.loadbalancer.server.port=3001"
+      - "traefik.http.routers.app2.service=service2"
+      - "traefik.http.services.service2.loadbalancer.server.port=3001"
 
       - "traefik.http.routers.app3.rule=Host(`ws.gasser.xyz`)"
       - "traefik.http.routers.app3.entrypoints=websecure"
       - "traefik.http.routers.app3.tls.certresolver=myresolver"
-      - "traefik.http.services.app3.loadbalancer.server.port=3002"
+      - "traefik.http.routers.app3.service=service3"
+      - "traefik.http.services.service3.loadbalancer.server.port=3002"
   mongo:
     image: mongo:latest
     volumes:
