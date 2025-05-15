@@ -49,6 +49,12 @@ services:
     labels:
       - "traefik.enable=true"
 
+      # CORS
+      - "traefik.http.middlewares.cors-permissive.headers.accessControlAllowOriginList=*"
+      - "traefik.http.middlewares.cors-permissive.headers.accessControlAllowMethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.cors-permissive.headers.accessControlAllowHeaders=Content-Type,Authorization,X-Requested-With" # Add any others you need, or use "*"
+      - "traefik.http.middlewares.cors-permissive.headers.addVaryHeader=true"
+
       - "traefik.http.routers.app1.rule=Host(`guessr.gasser.xyz`)"
       - "traefik.http.routers.app1.entrypoints=websecure"
       - "traefik.http.routers.app1.tls.certresolver=myresolver"
@@ -59,6 +65,7 @@ services:
       - "traefik.http.routers.app2.entrypoints=websecure"
       - "traefik.http.routers.app2.tls.certresolver=myresolver"
       - "traefik.http.routers.app2.service=service2"
+      - "traefik.http.routers.app2.middlewares=cors-permissive"
       - "traefik.http.services.service2.loadbalancer.server.port=3001"
 
       - "traefik.http.routers.app3.rule=Host(`ws.gasser.xyz`)"
