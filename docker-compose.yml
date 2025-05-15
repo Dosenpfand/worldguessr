@@ -1,6 +1,27 @@
 version: '3.8'
 
 services:
+
+  traefik:
+    image: traefik:v2.10
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certificates:/certificates
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=spam-guessr-certs@sad.bz"
+      - "--certificatesresolvers.myresolver.acme.storage=/certificates/acme.json"
+
   app:
     build:
       context: .
@@ -10,14 +31,33 @@ services:
       - "3002:3002"
     environment:
       MONGODB: "mongodb://mongo:27017"
-      # NEXT_PUBLIC_API_URL: "localhost"
-      # NEXT_PUBLIC_WS_HOST: "localhost"
+      # PORT=3000
+      # API_PORT=3001
+      # WS_PORT=3002
+      NEXT_PUBLIC_API_URL: "api.gasser.xyz"
+      NEXT_PUBLIC_WS_HOST: "ws.gasser.xyz"
     depends_on:
       - mongo
     networks:
       - app-network
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
 
+      - "traefik.http.routers.app1.rule=Host(`guessr.gasser.xyz`)"
+      - "traefik.http.routers.app1.entrypoints=websecure"
+      - "traefik.http.routers.app1.tls.certresolver=myresolver"
+      - "traefik.http.services.app1.loadbalancer.server.port=3000"
+
+      - "traefik.http.routers.app2.rule=Host(`api.gasser.xyz`)"
+      - "traefik.http.routers.app2.entrypoints=websecure"
+      - "traefik.http.routers.app2.tls.certresolver=myresolver"
+      - "traefik.http.services.app2.loadbalancer.server.port=3001"
+
+      - "traefik.http.routers.app3.rule=Host(`ws.gasser.xyz`)"
+      - "traefik.http.routers.app3.entrypoints=websecure"
+      - "traefik.http.routers.app3.tls.certresolver=myresolver"
+      - "traefik.http.services.app3.loadbalancer.server.port=3002"
   mongo:
     image: mongo:latest
     volumes:
@@ -28,6 +68,7 @@ services:
 
 volumes:
   mongo-data:
+  traefik-certificates:
 
 networks:
   app-network:
