@@ -126,8 +126,12 @@ export default async function handler(req, res) {
 
   let { action, secret, name, data, description_short, description_long, mapId } = req.body;
 
-  if (!action) {
-    return res.status(400).json({ message: 'Missing action' });
+  //secret must be string
+  if(typeof secret !== 'string') {
+    return res.status(400).json({ message: 'Invalid input' });
+  }
+  if(!action || !secret) {
+    return res.status(400).json({ message: 'Missing action or secret' });
   }
 
   // make sure name,short&long desc is appopriate
@@ -135,22 +139,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Inappropriate content' });
   }
 
-  let user = null;
-  if (secret) {
-    if (typeof secret !== 'string') {
-      return res.status(400).json({ message: 'Invalid secret format' });
-    }
-    user = await User.findOne({ secret: secret });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found for the provided secret' });
-    }
-  }
 
-  // For actions that require authentication, ensure user is present
-  if (action === 'edit' || action === 'get') {
-    if (!user) {
-      return res.status(401).json({ message: 'Authentication required for this action' });
-    }
+  // get user from secret
+  const user = await User.findOne({ secret: secret });
+  if(!user) {
+    return res.status(404).json({ message: 'User not found' });
   }
 
   // creating map
@@ -162,36 +155,20 @@ export default async function handler(req, res) {
     }
 
     // create map
-    const mapData = {
+    const map = await Map.create({
       slug: validation.slug,
       name,
+      created_by: user._id,
       data: validation.locationsData,
       description_short,
       description_long,
       maxDist: validation.maxDist,
-      // Defaulting to auto-accepted as per existing commented out logic
+      // in_review: user.instant_accept_maps ? false : true,
+      // accepted: user.instant_accept_maps ? true : false,
       in_review: false,
       accepted: true,
-    };
-
-    if (user) {
-      mapData.created_by = user._id;
-      mapData.map_creator_name = user.username;
-      // If specific logic for registered user's map acceptance is needed,
-      // ensure user.instant_accept_maps is checked here.
-      // e.g., mapData.in_review = user.instant_accept_maps ? false : true;
-      // mapData.accepted = user.instant_accept_maps ? true : false;
-    } else {
-      // For guests
-      mapData.created_by = null; 
-      mapData.map_creator_name = "Guest";
-      // Guest maps will also be auto-accepted based on the defaults above.
-      // If guest maps should always be in review, set:
-      // mapData.in_review = true;
-      // mapData.accepted = false;
-    }
-
-    const map = await Map.create(mapData);
+      map_creator_name: user.username
+    });
 
     return res.status(200).json({ message: 'Map created', map });
   } else if(action === 'edit') {
