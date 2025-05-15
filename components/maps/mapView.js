@@ -1138,9 +1138,17 @@ export default function MapView({ gameOptions, setGameOptions, showOptions, clos
   }, [searchTerm, handleSearch]);
 
   function createMap(map) {
-    if (!session?.token?.secret) {
-      toast.error("Not logged in");
-      return;
+    const payload = {
+      action: makeMap.edit ? "edit" : "create",
+      mapId: makeMap.mapId,
+      name: map.name,
+      description_short: map.description_short,
+      description_long: map.description_long,
+      data: map.data,
+    };
+
+    if (session?.token?.secret) {
+      payload.secret = session.token.secret;
     }
 
     fetch(window.cConfig?.apiUrl+"/api/map/action", {
@@ -1148,15 +1156,7 @@ export default function MapView({ gameOptions, setGameOptions, showOptions, clos
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        action: makeMap.edit ? "edit" : "create",
-        mapId: makeMap.mapId,
-        secret: session?.token?.secret,
-        name: map.name,
-        description_short: map.description_short,
-        description_long: map.description_long,
-        data: map.data,
-      }),
+      body: JSON.stringify(payload),
     })
       .then(async (res) => {
         let json;
@@ -1301,7 +1301,7 @@ export default function MapView({ gameOptions, setGameOptions, showOptions, clos
         </h1>
 
         <div className="mapViewRight">
-          {!makeMap.open && session?.token?.secret && (
+          {!makeMap.open && (
             <button
               onClick={() => {
 
