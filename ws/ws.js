@@ -414,6 +414,32 @@ app.ws('/wg', {
         player.verify(json);
         return;
       }
+      if (json.type === "updateGuestName" && !player.accountId && player.verified) {
+        let guestNameInput = json.guestUsername;
+        if (guestNameInput && typeof guestNameInput === 'string' && guestNameInput.trim() !== "") {
+            const cleanedName = Player.profanityFilter.clean(guestNameInput.trim());
+            if (cleanedName.length >= 3 && cleanedName.length <= 20 && /^[a-zA-Z0-9_]+$/.test(cleanedName)) {
+                const oldUsername = player.username;
+                player.username = cleanedName;
+                // Notify other players in the same game if the name changed
+                if (player.gameId && games.has(player.gameId)) {
+                    const game = games.get(player.gameId);
+                    if (game.players[player.id]) {
+                        game.players[player.id].username = player.username;
+                        // Send an update to all players in that game about the name change
+                        game.sendAllPlayers({ type: 'playerNameUpdate', playerId: player.id, newUsername: player.username });
+                    }
+                }
+                // Send confirmation back to the player
+                player.send({ type: 'guestNameUpdated', newUsername: player.username });
+            } else {
+                 player.send({ type: 'toast', key: 'invalidUsernameFormat', toastType: 'error' });
+            }
+        } else {
+            player.send({ type: 'toast', key: 'invalidUsernameFormat', toastType: 'error' });
+        }
+        return;
+      }
       if (json.type === 'screen' && json.screen && typeof json.screen === 'string') {
         player.setScreen(json.screen);
       }

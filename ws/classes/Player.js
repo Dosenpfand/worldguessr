@@ -1,8 +1,10 @@
-import validateSecret from "../../serverUtils/validateSecret.js";
 import make6DigitCode from "../../serverUtils/make6DigitCode.js";
+import validateSecret from "../../serverUtils/validateSecret.js";
 import isValidTimezone from "../../serverUtils/isValidTimezone.js";
 import moment from "moment";
 import { disconnectedPlayers, games, players } from "../../serverUtils/states.js";
+import { Filter } from 'bad-words';
+import fs from 'fs';
 import User from "../../models/User.js";
 import { getLeague } from "../../components/utils/leagues.js";
 import { setElo } from "../../api/eloRank.js";
@@ -27,11 +29,23 @@ export default class Player {
     this.sentReq = [];
     this.receivedReq = [];
     this.allowFriendReq = true;
-
     this.disconnected = false;
     this.disconnectTime =0;
 
     this.rejoinCode = createUUID();
+
+    // Initialize profanity filter for guest name validation
+    if (!Player.profanityFilter) {
+      Player.profanityFilter = new Filter();
+      Player.profanityFilter.removeWords('damn'); // Example, align with ws.js
+      try {
+        fs.readFileSync('public/Crazygames_profanity_filter.txt', 'utf8').split('\n').forEach((word) => {
+          if (word.trim()) Player.profanityFilter.addWords(word.trim());
+        });
+      } catch (e) {
+        console.error("Error loading profanity filter for Player class:", e.message);
+      }
+    }
   }
 
   toJSON() {
@@ -132,12 +146,24 @@ export default class Player {
             }
 
           // guest mode
-          this.username = 'Guest #' + make6DigitCode().toString().substring(0, 4);
+          let guestNameInput = json.guestUsername;
+          if (guestNameInput && typeof guestNameInput === 'string' && guestNameInput.trim() !== "") {
+            const cleanedName = Player.profanityFilter.clean(guestNameInput.trim());
+            if (cleanedName.length >= 3 && cleanedName.length <= 20 && /^[a-zA-Z0-9_]+$/.test(cleanedName)) {
+              this.username = cleanedName;
+            } else {
+              // Invalid guest name provided, fallback to default
+              this.username = 'Guest #' + make6DigitCode().toString().substring(0, 4);
+            }
+          } else {
+            // No guest name provided or empty string, use default
+            this.username = 'Guest #' + make6DigitCode().toString().substring(0, 4);
+          }
           this.verified = true;
 
           this.send({
             type: 'verify',
-            guestName: this.username,
+            guestName: this.username, // Send the finalized username
             rejoinCode: this.rejoinCode
           });
           this.send({

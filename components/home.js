@@ -85,6 +85,8 @@ export default function Home({ }) {
 
   const [session, setSession] = useState(false);
   const { data: mainSession } = useSession();
+  const [guestUsername, setGuestUsername] = useState("");
+  const [guestNameSet, setGuestNameSet] = useState(false);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [screen, setScreen] = useState("home");
   const [loading, setLoading] = useState(false);
@@ -256,6 +258,13 @@ export default function Home({ }) {
 
     // return () => { // CrazyGames SDK removeAuthListener removed
     // }
+
+    // Check for stored guest username
+    const storedGuestName = gameStorage.getItem("guestUsername");
+    if (storedGuestName) {
+      setGuestUsername(storedGuestName);
+      setGuestNameSet(true);
+    }
 
   }, []);
 
@@ -873,8 +882,10 @@ setShowCountryButtons(false)
       // Always take this path now
           const tz = moment.tz.guess();
           let secret = "not_logged_in";
+          let nameToSendAsGuest = guestUsername; // Use state guestUsername
+
           try {
-            const s = window.localStorage.getItem("wg_secret");
+            const s = gameStorage.getItem("wg_secret"); // Use gameStorage
             if(s) {
               secret = s;
             }
@@ -887,8 +898,13 @@ setShowCountryButtons(false)
 
           if(secret !== "not_logged_in") {
             window.verified = true;
+            ws.send(JSON.stringify({ type: "verify", secret, tz, rejoinCode: gameStorage.getItem("rejoinCode") }));
+          } else {
+            // Guest verify
+            // Ensure guestUsername from state is used if set, otherwise localStorage one if ws connects before state update
+            const finalGuestName = guestNameSet ? guestUsername : (gameStorage.getItem("guestUsername") || "");
+            ws.send(JSON.stringify({ type: "verify", secret: "not_logged_in", tz, guestUsername: finalGuestName, rejoinCode: gameStorage.getItem("rejoinCode") }));
           }
-        ws.send(JSON.stringify({ type: "verify", secret, tz, rejoinCode: gameStorage.getItem("rejoinCode") }))
       // } else if(window.verifyPayload) { // CrazyGames related logic removed
       //   console.log("sending verify from verifyPayload")
       //   ws.send(window.verifyPayload)
@@ -1852,7 +1868,24 @@ setShowCountryButtons(false)
       <HeadContent text={text} inCoolMathGames={inCoolMathGames} inCrazyGames={inCrazyGames} />
 
       <AccountModal inCrazyGames={inCrazyGames} shown={accountModalOpen} session={session} setAccountModalOpen={setAccountModalOpen} />
-      <SetUsernameModal shown={session && session?.token?.secret && !session.token.username} session={session} />
+      <SetUsernameModal
+        shown={(session && session?.token?.secret && !session.token.username && !inCrazyGames && !isApp) || (!session && !guestNameSet && !inCrazyGames && !isApp && screen === 'home')}
+        session={session}
+        isGuest={!session}
+        onGuestNameSave={(name) => {
+          setGuestUsername(name);
+          setGuestNameSet(true);
+          gameStorage.setItem("guestUsername", name);
+          // If ws is already connected and verified as guest, might need to send an update or re-verify.
+          // For simplicity, name is sent on initial verify. If ws connects after name set, it's fine.
+          // If name is set after ws connected as "Guest #1234", a re-verify or update message would be needed.
+          // Current logic sends guestUsername on initial verify.
+          // If ws is already connected, send an update message with the new name
+          if (ws && ws.readyState === WebSocket.OPEN && !session) {
+            ws.send(JSON.stringify({ type: "updateGuestName", guestUsername: name }));
+          }
+        }}
+      />
       <SuggestAccountModal shown={showSuggestLoginModal} setOpen={setShowSuggestLoginModal} />
       <DiscordModal shown={showDiscordModal} setOpen={setShowDiscordModal} />
       {/* <MerchModal shown={merchModal} onClose={() => setMerchModal(false)} session={session} /> */}
