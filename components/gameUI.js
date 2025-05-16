@@ -500,7 +500,7 @@ multiplayerState?.gameData?.players.find(p => p.id !== multiplayerState?.gameDat
 </div>
 
 <p style={{zIndex: 1000, pointerEvents: 'none', color: 'white', fontSize: 20, padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', display: isStartingDuel ? '' : 'none', marginTop: "10px" }}>
-{timeToNextMultiplayerEvt}
+{timeToNextMultiplayerEvt.toFixed(0)}
 
 </p>
 </div>
@@ -637,7 +637,7 @@ text("round", {r:multiplayerState?.gameData?.curRound, mr: multiplayerState?.gam
 
 :
 
-      text("roundTimer", {r:multiplayerState?.gameData?.curRound, mr: multiplayerState?.gameData?.rounds, t: timeToNextMultiplayerEvt.toFixed(1)})}
+      text("roundTimer", {r:multiplayerState?.gameData?.curRound, mr: multiplayerState?.gameData?.rounds, t: timeToNextMultiplayerEvt.toFixed(0)})}
         </span>
 
         <span className={`timer ${!onboardingTimerShown ? '' : 'shown'}`}>
@@ -660,7 +660,7 @@ text("round", {r:multiplayerState?.gameData?.curRound, mr: multiplayerState?.gam
 
         {multiplayerState && multiplayerState.inGame && !multiplayerState?.gameData?.duel && isMultiplayerGetReady && multiplayerState?.gameData?.curRound === 1 && (
           <BannerText text={
-            text("gameStartingIn", {t:timeToNextMultiplayerEvt})
+            text("gameStartingIn", {t:timeToNextMultiplayerEvt.toFixed(0)})
           } shown={true} />
         )}
 
