@@ -245,5 +245,6 @@
   "nameChangeCooldown": "You can change your name again in {{days}} days",
   "disableTimer": "Disable Timer",
   "exhaustUniqueLocations": "Exhaust unique locations first",
-  "confirmLeaveGame": "Are you sure you want to leave the game?"
+  "confirmLeaveGame": "Are you sure you want to leave the game?",
+  "waitBetweenRoundsSecs": "seconds of break between rounds"
 }
