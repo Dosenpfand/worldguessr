@@ -295,7 +295,7 @@ setInterval(() => {
   ipDuelRequestsLast10.clear();
 }, 10000);
 
-function updateGameOptions(game, rounds=5, timePerRound=30, location="all", nm=false, npz=false, showRoadName=true, displayLocation="World", waitBetweenRounds=10) {
+function updateGameOptions(game, rounds=10, timePerRound=100, location="all", nm=false, npz=false, showRoadName=false, displayLocation="World", waitBetweenRounds=50) {
           // maxDist no longer required-> can be pulled from community map
           if (!location) return;
           if (!rounds || !timePerRound) {

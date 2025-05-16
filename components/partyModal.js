@@ -89,7 +89,7 @@ checked={multiplayerState.createOptions.timePerRound === 60*60*24}
 <label>{text("waitBetweenRoundsSecs")}:</label>
 <div className="waitBetweenRounds numberInput">
   <FaArrowLeft onClick={() => setMultiplayerState(prev => ({ ...prev, createOptions: {...prev.createOptions, waitBetweenRounds: Math.max(3, Math.min(60, Number(multiplayerState.createOptions.waitBetweenRounds) - 1)) }}))} />
-  <input type="number" className='numberIn' placeholder={text("waitBetweenRoundsSecs")} max={60} min={3} onChange={(e) => enforceMinMax(e.target, ()=>setMultiplayerState(prev=>({...prev, createOptions: {...prev.createOptions, waitBetweenRounds: e.target.value}})))} value={multiplayerState.createOptions.waitBetweenRounds} />
+  <input type="number" className='numberIn' placeholder={text("waitBetweenRoundsSecs")} max={120} min={10} onChange={(e) => enforceMinMax(e.target, ()=>setMultiplayerState(prev=>({...prev, createOptions: {...prev.createOptions, waitBetweenRounds: e.target.value}})))} value={multiplayerState.createOptions.waitBetweenRounds} />
   <FaArrowRight onClick={() =>  setMultiplayerState(prev => ({ ...prev, createOptions: {...prev.createOptions, waitBetweenRounds: Math.max(3, Math.min(60, Number(multiplayerState.createOptions.waitBetweenRounds) + 1)) }}))} />
 </div>
 

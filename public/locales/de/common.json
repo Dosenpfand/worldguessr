@@ -51,7 +51,7 @@
   "howToPlay": "Spielanleitung",
   "roundTimer": "Runde #{{r}} / {{mr}} - {{t}} Sekunden",
   "round": "Runde #{{r}} / {{mr}}",
-  "gameStartingIn": "Spiel startet in {{t}}s",
+  "gameStartingIn": "Weiter geht's in {{t}} Sekunden",
   "guessDistanceKm": "Ihre Vermutung war {{d}}km entfernt",
   "guessDistanceM": "Ihre Vermutung war {{d}}m entfernt",
   "guessDistanceMi": "Ihre Vermutung war {{d}}mi entfernt",
